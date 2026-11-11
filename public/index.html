@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Klimaat thuis</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Klimaat thuis</h1>
+      <p id="summary" class="muted">Laden...</p>
+    </div>
+    <div class="header-actions">
+      <button id="awayBtn" class="secondary">Afwezig</button>
+      <button id="refreshBtn" class="secondary" title="Nu verversen">Ververs</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="error" class="error" hidden></div>
+
+    <section class="status-strip">
+      <div class="pill"><span class="muted">Stand</span><strong id="mode">-</strong></div>
+      <div class="pill"><span class="muted">Doel</span><strong id="target">-</strong></div>
+      <div class="pill"><span class="muted">Volgende</span><strong id="next">-</strong></div>
+      <div class="pill"><span class="muted">Strategie</span><strong id="strategyLabel">-</strong></div>
+    </section>
+
+    <section>
+      <h2>Kamers</h2>
+      <div id="rooms" class="grid"></div>
+    </section>
+
+    <section>
+      <h2>Nest (cv)</h2>
+      <div id="nest" class="card"></div>
+    </section>
+
+    <section>
+      <div class="row-between">
+        <h2>Verloop</h2>
+        <div class="seg" id="range">
+          <button data-h="6">6 u</button>
+          <button data-h="24" class="on">24 u</button>
+          <button data-h="168">7 d</button>
+        </div>
+      </div>
+      <div class="card"><canvas id="chart" height="260"></canvas><div id="legend" class="legend"></div></div>
+    </section>
+
+    <section>
+      <h2>Schema</h2>
+      <div class="card">
+        <table class="schedule">
+          <thead><tr><th>Dagen</th><th>Van</th><th>Tot</th><th>°C</th><th></th></tr></thead>
+          <tbody id="schedule"></tbody>
+        </table>
+        <div class="row">
+          <button id="addPeriod" class="secondary">Periode toevoegen</button>
+        </div>
+        <div class="settings">
+          <label>Strategie
+            <select id="strategy"></select>
+          </label>
+          <label>Buiten schema (°C)
+            <input id="setback" type="number" step="0.5" min="5" max="25">
+          </label>
+          <label class="check"><input id="coolEnabled" type="checkbox"> Airco mag koelen als het te warm is</label>
+        </div>
+        <div class="row">
+          <button id="saveSettings">Opslaan</button>
+          <span id="saveMsg" class="muted"></span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Logboek</h2>
+      <ul id="events" class="card events"></ul>
+      <ul id="reasons" class="muted reasons"></ul>
+    </section>
+  </main>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "homebridge-klimaat",
+  "version": "1.0.0",
+  "description": "Klimaatregeling voor Homebridge: Nest (cv op gas) en airco's samen op een schema",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "demo": "node src/index.js --demo --speed 60",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Klimaat-app voor Homebridge
+After=network-online.target homebridge.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/klimaat
+ExecStart=/usr/bin/node /home/pi/klimaat/src/index.js
+Restart=on-failure
+RestartSec=10
+Environment=TZ=Europe/Amsterdam
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,39 @@
+{
+  "homebridge": {
+    "url": "http://192.168.1.50:8581",
+    "username": "admin",
+    "password": "VUL_HIER_JE_WACHTWOORD_IN"
+  },
+  "port": 3000,
+  "webPassword": "",
+  "pollSeconds": 60,
+  "timezone": "Europe/Amsterdam",
+
+  "thermostat": {
+    "name": "Nest"
+  },
+
+  "rooms": [
+    { "id": "kelder",     "name": "Kelder",       "airco": "Airco Kelder" },
+    { "id": "begane",     "name": "Begane grond", "airco": "Airco Woonkamer", "useThermostatSensor": false },
+    { "id": "eerste",     "name": "1e verdieping", "airco": "Airco Slaapkamer" },
+    { "id": "zolder",     "name": "Zolder",       "airco": "Airco Zolder", "sensor": "" }
+  ],
+
+  "settings": {
+    "strategy": "hybride",
+    "setbackTemperature": 16,
+    "schedule": [
+      { "days": [0, 1, 2, 3, 4, 5, 6], "start": "17:00", "end": "20:00", "target": 20.5 }
+    ],
+    "cooling": {
+      "enabled": false,
+      "margin": 1.5
+    },
+    "tuning": {
+      "aircoOffset": 1.0,
+      "maxPreheatMinutes": 120,
+      "defaultRate": 1.5
+    }
+  }
+}
