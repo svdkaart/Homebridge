@@ -43,7 +43,7 @@ Een airco (warmtepomp) is bij milde buitentemperaturen vaak goedkoper dan gas. K
 
    ```bash
    cd /home/pi
-   git clone https://github.com/svdkaart/Homebridge.git klimaat
+   git clone -b claude/serene-clarke-jehv0j https://github.com/svdkaart/Homebridge.git klimaat
    cd klimaat
    cp config.example.json config.json
    nano config.json
