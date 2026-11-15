@@ -70,6 +70,8 @@ Een airco (warmtepomp) is bij milde buitentemperaturen vaak goedkoper dan gas. K
 
    ```bash
    sudo cp deploy/klimaat.service /etc/systemd/system/
+   sudo sed -i "s#/usr/bin/node#$(which node)#" /etc/systemd/system/klimaat.service
+   sudo systemctl daemon-reload
    sudo systemctl enable --now klimaat
    journalctl -u klimaat -f
    ```
