@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node src/index.js",
     "demo": "node src/index.js --demo --speed 60",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "apparaten": "node src/list.js"
   },
   "license": "MIT"
 }
