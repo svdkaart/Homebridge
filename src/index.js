@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HomebridgeClient } from './homebridge.js';
-import { DemoHomebridge } from './demo.js';
+import { DemoHomebridge, DemoPrices } from './demo.js';
 import { ClimateService } from './service.js';
 import { Storage } from './storage.js';
 import { createServer } from './server.js';
@@ -49,7 +49,8 @@ const dataDir = path.resolve(option('--data', path.join(ROOT, demo ? 'data-demo'
 if (demo) fs.rmSync(dataDir, { recursive: true, force: true });
 const storage = new Storage(dataDir);
 const client = demo ? new DemoHomebridge(config, clock) : new HomebridgeClient(config.homebridge || {});
-const service = new ClimateService({ config, client, storage, clock });
+const prices = demo ? new DemoPrices(config.prices, clock) : undefined;
+const service = new ClimateService({ config, client, storage, clock, prices });
 
 const pollMs = Math.max(2000, ((config.pollSeconds || 60) * 1000) / speed);
 const port = Number(option('--port', config.port || 3000));

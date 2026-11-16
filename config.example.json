@@ -13,6 +13,16 @@
     "name": "Nest"
   },
 
+  "outdoorSensor": "Buitentemperatuur",
+
+  "prices": {
+    "provider": "frank",
+    "boilerEfficiency": 0.9,
+    "copAt7": 4.0,
+    "copAtMinus7": 2.5,
+    "fallback": { "electricity": 0.25, "gas": 1.30 }
+  },
+
   "rooms": [
     { "id": "kelder",     "name": "Kelder",       "airco": "Airco Kelder" },
     { "id": "begane",     "name": "Begane grond", "airco": "Airco Woonkamer", "useThermostatSensor": false },
@@ -21,7 +31,7 @@
   ],
 
   "settings": {
-    "strategy": "hybride",
+    "strategy": "slim",
     "setbackTemperature": 16,
     "schedule": [
       { "days": [0, 1, 2, 3, 4, 5, 6], "start": "17:00", "end": "20:00", "target": 20.5 }

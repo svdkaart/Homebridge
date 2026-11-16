@@ -1,3 +1,5 @@
+import { PriceService } from './prices.js';
+
 // Nep-Homebridge met een simpele warmte-simulatie. Zo kun je de app
 // uitproberen zonder Raspberry Pi: npm run demo
 
@@ -45,6 +47,28 @@ function makeNest(name, temp) {
   };
 }
 
+// Nepprijzen: stroom duur in de avondpiek, goedkoop 's nachts en midden op de dag.
+export class DemoPrices extends PriceService {
+  constructor(cfg, clock) {
+    super(cfg);
+    this.clock = clock;
+  }
+
+  async refresh(now) {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    const electricity = [];
+    for (let h = 0; h < 48; h++) {
+      const from = start.getTime() + h * 3600000;
+      const hour = h % 24;
+      const price = 0.22 + (hour >= 17 && hour < 21 ? 0.12 : 0) - (hour >= 11 && hour < 15 ? 0.08 : 0) - (hour < 6 ? 0.05 : 0);
+      electricity.push({ from, till: from + 3600000, price: Math.round(price * 10000) / 10000 });
+    }
+    const gas = [{ from: start.getTime(), till: start.getTime() + 48 * 3600000, price: 1.32 }];
+    this.data = { electricity, gas };
+  }
+}
+
 export class DemoHomebridge {
   constructor(config, clock) {
     this.clock = clock;
@@ -63,6 +87,13 @@ export class DemoHomebridge {
       ...profiles[i % profiles.length],
       acc: makeHeaterCooler(r.airco, 16.5 + i * 0.3),
     }));
+    this.outdoorAcc = {
+      uniqueId: uid(),
+      type: 'TemperatureSensor',
+      serviceName: config.outdoorSensor || 'Buitentemperatuur',
+      serviceCharacteristics: [characteristic('CurrentTemperature', this.outdoor)],
+      values: { CurrentTemperature: this.outdoor },
+    };
     this.lastT = clock().getTime();
   }
 
@@ -94,7 +125,7 @@ export class DemoHomebridge {
 
   async getAccessories() {
     this.step();
-    const all = [this.nest, ...this.rooms.map((r) => r.acc)];
+    const all = [this.nest, ...this.rooms.map((r) => r.acc), this.outdoorAcc];
     return structuredClone(all);
   }
 

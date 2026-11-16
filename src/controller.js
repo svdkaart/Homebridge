@@ -14,7 +14,15 @@ export const STRATEGIES = {
   'hybride':      { label: 'Hybride, cv basis en airco helpt mee', boostOn: 0.5, boostOff: 0.0, nestOffset: 0, nestOn: true },
   'airco-eerst':  { label: 'Airco eerst, cv als achtervang', boostOn: 0.2, boostOff: -0.2, nestOffset: -1.0, nestOn: true },
   'alleen-airco': { label: 'Alleen airco, cv blijft op nachtstand', boostOn: 0.2, boostOff: -0.2, nestOffset: 0, nestOn: false },
+  'slim':         { label: 'Slim op prijs (Frank Energie)', dynamic: true },
 };
+
+// Bij "slim" kiest de app per moment de goedkoopste warmtebron.
+export function effectiveStrategy(name, economics) {
+  if (name !== 'slim') return STRATEGIES[name] && !STRATEGIES[name].dynamic ? name : 'hybride';
+  if (!economics) return 'hybride';
+  return economics.choice === 'airco' ? 'airco-eerst' : 'cv-eerst';
+}
 
 export const DEFAULT_TUNING = {
   aircoOffset: 1.0,       // airco meet bij het plafond; zet hem iets hoger dan het doel
@@ -43,8 +51,9 @@ export function leadMinutes(deficit, rate, maxMinutes) {
  * @param {object} input.thermostat { available, mode, temp } of null
  * @param {object} input.memory    { aircoOn, rates, overrides, away }
  */
-export function decide({ now, settings, rooms, thermostat, memory }) {
-  const strategy = STRATEGIES[settings.strategy] || STRATEGIES.hybride;
+export function decide({ now, settings, rooms, thermostat, memory, economics = null }) {
+  const effective = effectiveStrategy(settings.strategy, economics);
+  const strategy = STRATEGIES[effective];
   const tuning = { ...DEFAULT_TUNING, ...(settings.tuning || {}) };
   const cooling = { enabled: false, margin: 1.5, ...(settings.cooling || {}) };
   const reasons = [];
@@ -143,6 +152,7 @@ export function decide({ now, settings, rooms, thermostat, memory }) {
     mode,
     target,
     strategy: settings.strategy in STRATEGIES ? settings.strategy : 'hybride',
+    effectiveStrategy: effective,
     period: period ? { start: period.start.toISOString(), end: period.end.toISOString(), target: period.target } : null,
     next: next ? { start: next.start.toISOString(), end: next.end.toISOString(), target: next.target } : null,
     preheatFrom: preheatFrom ? preheatFrom.toISOString() : null,

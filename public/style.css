@@ -105,6 +105,14 @@ input[type="number"] { width: 70px; }
 .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 16px; }
 .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 .settings label.check { flex-direction: row; align-items: center; color: var(--text); }
+.eco { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.eco .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.eco .win { color: var(--ok); }
+.bars { display: flex; align-items: flex-end; gap: 1px; height: 70px; margin-top: 14px; }
+.bars div { flex: 1; background: var(--accent); opacity: .55; border-radius: 2px 2px 0 0; min-height: 2px; }
+.bars div.now { opacity: 1; }
+.bars div.cheap { background: var(--ok); }
+.bars-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
 .error { background: var(--err-bg); color: var(--err); padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; }
 .events { list-style: none; margin: 0; padding: 8px 14px; max-height: 260px; overflow: auto; font-size: 13px; }
 .events li { padding: 4px 0; border-bottom: 1px solid var(--line); }

@@ -143,3 +143,44 @@ test('anti-pendel: airco blijft minimaal 15 minuten in dezelfde stand', () => {
   d = decide({ now: at(20, 1), settings, thermostat: nest, memory: mem({ aircoOn: { a: 'heat' }, aircoSince: { a: at(19, 58).getTime() } }), rooms: [{ id: 'a', temp: 19 }] });
   assert.deepEqual(d.aircoCmds.a, { mode: 'off' });
 });
+
+import { compareHeatCost, copFor, DEFAULT_PRICE_CONFIG, priceAt } from '../src/prices.js';
+
+test('prijs: airco goedkoper bij mild weer, gas bij vorst', () => {
+  // stroom 25 ct, gas 1.30 per m3: cv-warmte ongeveer 14.8 ct/kWh
+  const mild = compareHeatCost({ electricity: 0.25, gas: 1.3, outdoor: 10 });
+  assert.equal(mild.choice, 'airco');
+  const frost = compareHeatCost({ electricity: 0.45, gas: 1.3, outdoor: -5 });
+  assert.equal(frost.choice, 'gas');
+  assert.equal(copFor(7, DEFAULT_PRICE_CONFIG), 4);
+  assert.equal(copFor(-7, DEFAULT_PRICE_CONFIG), 2.5);
+});
+
+test('prijs: marge voorkomt heen-en-weer schakelen', () => {
+  // Bijna gelijk: blijft bij de vorige keuze
+  const gasHeat = 1.3 / (9.77 * 0.9);
+  const e = gasHeat * 3.5 * 1.02; // airco 2% duurder
+  assert.equal(compareHeatCost({ electricity: e, gas: 1.3, outdoor: null, previous: 'airco' }).choice, 'airco');
+  assert.equal(compareHeatCost({ electricity: e, gas: 1.3, outdoor: null, previous: 'gas' }).choice, 'gas');
+});
+
+test('prijs: juiste prijs voor het huidige kwartier of uur', () => {
+  const list = [{ from: 0, till: 10, price: 1 }, { from: 10, till: 20, price: 2 }];
+  assert.equal(priceAt(list, 10), 2);
+  assert.equal(priceAt(list, 25), null);
+});
+
+test('strategie slim: kiest airco-eerst of cv-eerst op basis van prijs', () => {
+  const s = { ...settings, strategy: 'slim' };
+  const rooms = [{ id: 'a', temp: 20.2 }];
+  let d = decide({ now: at(18), settings: s, thermostat: nest, memory: mem(), rooms, economics: { choice: 'airco' } });
+  assert.equal(d.effectiveStrategy, 'airco-eerst');
+  assert.deepEqual(d.thermostatCmd, { target: 19.5 });
+  assert.equal(d.aircoCmds.a.mode, 'heat');
+  d = decide({ now: at(18), settings: s, thermostat: nest, memory: mem(), rooms, economics: { choice: 'gas' } });
+  assert.equal(d.effectiveStrategy, 'cv-eerst');
+  assert.deepEqual(d.thermostatCmd, { target: 20.5 });
+  assert.equal(d.aircoCmds.a, null);
+  d = decide({ now: at(18), settings: s, thermostat: nest, memory: mem(), rooms });
+  assert.equal(d.effectiveStrategy, 'hybride');
+});

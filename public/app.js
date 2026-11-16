@@ -55,6 +55,10 @@ function renderStatus() {
   $('target').textContent = d.target != null ? `${d.target}°C` : '-';
   $('next').textContent = d.next ? `${fmtTime(d.next.start, true)} (${d.next.target}°)` : '-';
   $('strategyLabel').textContent = s.strategies?.[s.settings.strategy] || s.settings.strategy;
+  if (s.settings.strategy === 'slim' && d.effectiveStrategy) {
+    $('strategyLabel').textContent += d.effectiveStrategy === 'airco-eerst' ? ', nu airco eerst' : d.effectiveStrategy === 'cv-eerst' ? ', nu cv eerst' : '';
+  }
+  renderEnergy();
   const temps = (s.rooms || []).map((r) => r.temp).filter((t) => t != null);
   const avg = temps.length ? temps.reduce((a, b) => a + b, 0) / temps.length : null;
   $('summary').textContent = `Gemiddeld ${fmtT(avg)} in huis, bijgewerkt ${s.t ? fmtTime(s.t) : '-'}`;
@@ -103,6 +107,48 @@ function renderStatus() {
   $('events').replaceChildren(...(s.events || []).map((e) => el('li', {}, `${fmtTime(e.t, true)}  ${e.text}`)));
   if (!s.events?.length) $('events').append(el('li', { class: 'muted' }, 'Nog geen acties.'));
   $('reasons').replaceChildren(...(d.reasons || []).map((t) => el('li', {}, t)));
+}
+
+const ct = (eur) => (eur == null ? '-' : `${(eur * 100).toFixed(1)} ct`);
+
+function renderEnergy() {
+  const e = state.economics;
+  if (!e) {
+    $('energy').replaceChildren(el('span', { class: 'muted' }, 'Nog geen prijsgegevens.'));
+    return;
+  }
+  const cell = (label, value, win = false, sub = '') =>
+    el('div', {}, el('div', { class: 'muted' }, label), el('div', { class: `v${win ? ' win' : ''}` }, value), sub ? el('div', { class: 'muted' }, sub) : '');
+  const kids = [
+    el('div', { class: 'eco' },
+      cell('Stroom', `${ct(e.electricity)}/kWh`),
+      cell('Gas', `€ ${e.gas.toFixed(2)}/m³`),
+      cell('Warmte uit airco', `${ct(e.aircoHeat)}/kWh`, e.choice === 'airco', `rendement ${e.cop}x`),
+      cell('Warmte uit cv', `${ct(e.gasHeat)}/kWh`, e.choice === 'gas', 'HR-ketel'),
+      cell('Buiten', e.outdoor == null ? 'onbekend' : `${e.outdoor.toFixed(1)}°`),
+      cell('Goedkoopste nu', e.choice === 'airco' ? 'Airco' : 'Gas (cv)', true),
+    ),
+  ];
+  if (!e.live) {
+    kids.push(el('p', { class: 'muted' }, `Geen live prijzen van Frank Energie, de app rekent met vaste prijzen.${e.error ? ` (${e.error})` : ''}`));
+  }
+  const fc = state.priceForecast || [];
+  if (fc.length > 1) {
+    const vals = fc.map((p) => p.price);
+    const max = Math.max(...vals);
+    const min = Math.min(...vals);
+    const cheapLimit = min + (max - min) * 0.25;
+    kids.push(
+      el('div', { class: 'muted', style: 'margin-top:14px' }, `Stroomprijs komende uren, van ${ct(min)} tot ${ct(max)}`),
+      el('div', { class: 'bars' }, fc.map((p, i) => el('div', {
+        class: `${i === 0 ? 'now' : ''} ${p.price <= cheapLimit ? 'cheap' : ''}`,
+        style: `height:${Math.max(3, ((p.price - Math.min(0, min)) / Math.max(0.0001, max - Math.min(0, min))) * 100)}%`,
+        title: `${fmtTime(p.from)}  ${ct(p.price)}`,
+      }))),
+      el('div', { class: 'bars-axis' }, el('span', {}, 'nu'), el('span', {}, fmtTime(fc[fc.length - 1].till))),
+    );
+  }
+  $('energy').replaceChildren(...kids);
 }
 
 function renderSettings() {

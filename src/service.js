@@ -1,6 +1,7 @@
 // De regelkring: elke minuut status ophalen, beslissen, aansturen, opslaan.
 
 import { decide, updateRates, STRATEGIES, DEFAULT_TUNING } from './controller.js';
+import { PriceService, compareHeatCost } from './prices.js';
 import { validateSchedule } from './schedule.js';
 import {
   findService, readThermostat, readAirco, readTemp,
@@ -10,8 +11,10 @@ import {
 const MANUAL_OVERRIDE_MINUTES = 180;
 
 export class ClimateService {
-  constructor({ config, client, storage, clock = () => new Date(), log = console }) {
+  constructor({ config, client, storage, clock = () => new Date(), log = console, prices = null }) {
     this.config = config;
+    this.prices = prices || new PriceService(config.prices, log);
+    this.economics = null;
     this.client = client;
     this.storage = storage;
     this.clock = clock;
@@ -74,7 +77,25 @@ export class ClimateService {
         if (until <= nowMs) delete this.memory.overrides[id];
       }
 
-      const decision = decide({ now, settings: this.settings, rooms, thermostat, memory: this.memory });
+      // Buitentemperatuur en energieprijzen
+      const outdoorAcc = this.config.outdoorSensor ? findService(accessories, this.config.outdoorSensor, SENSOR_TYPES) : null;
+      const outdoor = outdoorAcc ? readTemp(outdoorAcc) : null;
+      await this.prices.refresh(now);
+      const price = this.prices.current(now);
+      const eco = compareHeatCost({
+        electricity: price.electricity, gas: price.gas, outdoor, cfg: this.prices.cfg, previous: this.memory.priceChoice,
+      });
+      if (eco && this.settings.strategy === 'slim' && this.memory.priceChoice && eco.choice !== this.memory.priceChoice) {
+        this.event(eco.choice === 'airco'
+          ? `Airco is nu goedkoper (${fmtCt(eco.aircoHeat)} tegen ${fmtCt(eco.gasHeat)} per kWh warmte)`
+          : `Gas is nu goedkoper (${fmtCt(eco.gasHeat)} tegen ${fmtCt(eco.aircoHeat)} per kWh warmte)`);
+      }
+      if (eco) this.memory.priceChoice = eco.choice;
+      this.economics = eco ? { ...eco, live: price.live, error: price.error } : null;
+
+      const decision = decide({
+        now, settings: this.settings, rooms, thermostat, memory: this.memory, economics: this.economics,
+      });
 
       // Nest aansturen
       if (nestAcc && decision.thermostatCmd) {
@@ -124,6 +145,8 @@ export class ClimateService {
         mode: decision.mode,
         target: decision.target,
         nest: { temp: thermostat.temp, target: thermostat.target, heating: thermostat.heating },
+        outdoor,
+        eco: this.economics ? { e: this.economics.electricity, g: this.economics.gas, c: this.economics.choice } : null,
         rooms: Object.fromEntries(rooms.map((r) => [r.id, {
           temp: r.temp,
           airco: this.memory.aircoOn[r.id] || (r.airco.mode !== 'off' ? r.airco.mode : null),
@@ -204,6 +227,8 @@ export class ClimateService {
       ...(this.lastStatus || {}),
       error: this.lastError,
       settings: this.settings,
+      economics: this.economics,
+      priceForecast: this.prices.upcoming(this.clock()),
       strategies: Object.fromEntries(Object.entries(STRATEGIES).map(([k, v]) => [k, v.label])),
       away: this.memory.away,
       events: this.events,
@@ -211,4 +236,8 @@ export class ClimateService {
       serverTime: this.clock().getTime(),
     };
   }
+}
+
+function fmtCt(euro) {
+  return `${(euro * 100).toFixed(1)} ct`;
 }

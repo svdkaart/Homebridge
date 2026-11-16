@@ -25,7 +25,28 @@ Voorbeeld: elke dag van 17:00 tot 20:00 is het 20,5°C in elke kamer. De Nest do
 | Airco eerst | doel min 1°C, als achtervang | 0,2°C te koud |
 | Alleen airco | blijft op nachtstand | 0,2°C te koud |
 
-Een airco (warmtepomp) is bij milde buitentemperaturen vaak goedkoper dan gas. Kies dan "Airco eerst". Bij vorst is "Hybride" of "Cv eerst" meestal beter.
+| Slim op prijs | kiest zelf | afhankelijk van de prijs |
+
+## Slim op prijs (Frank Energie)
+
+Met de strategie "Slim op prijs" kiest de app elke minuut de goedkoopste warmtebron.
+
+- De app haalt elk uur de dynamische stroom- en gasprijzen op bij Frank Energie. Daar is geen account voor nodig.
+- Warmte uit de cv kost: gasprijs / (9,77 kWh per m³ x 90% rendement).
+- Warmte uit de airco kost: stroomprijs / rendement (COP). De COP hangt af van de buitentemperatuur: 4,0 bij 7°C en 2,5 bij -7°C.
+- Is de airco goedkoper, dan werkt de app als "Airco eerst". Is gas goedkoper, dan als "Cv eerst".
+- Er zit 5% marge in, zodat de app niet steeds wisselt.
+- Werkt de prijs-API niet, dan rekent de app met de vaste prijzen uit `prices.fallback`.
+
+Voorbeeld: stroom 25 ct en gas € 1,30. Warmte uit de cv kost 14,8 ct per kWh. Bij 7°C buiten kost warmte uit de airco 6,3 ct per kWh. De airco is dan ruim twee keer goedkoper.
+
+Zet in `config.json` de naam van je buitensensor bij `outdoorSensor`. Zonder buitensensor rekent de app met een COP van 3,5.
+
+Test de koppeling met Frank Energie:
+
+```bash
+npm run prijzen
+```
 
 ## Wat je nodig hebt
 
